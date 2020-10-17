@@ -23,6 +23,17 @@
     <module>dev.galasa.examples.tests</module>
     <module>dev.galasa.examples.obr</module>
   </modules>
+  
+  <distributionManagement>
+		<repository>
+			<id>example</id>
+			<url>${example.release.repo}</url>
+		</repository>
+		<snapshotRepository>
+			<id>example</id>
+			<url>${example.snapshot.repo}</url>
+		</snapshotRepository>
+	</distributionManagement>
 
   <dependencyManagement>
     <dependencies>
@@ -87,11 +98,11 @@
 		    </plugin>
 		  </plugins>
 		</pluginManagement>
+		
 		<plugins>
 		  <plugin>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>maven-bundle-plugin</artifactId>
-			<version>4.1.0</version>
 			<extensions>true</extensions>
 		  </plugin>
 		  <plugin>
@@ -106,12 +117,6 @@
                   <goal>bundletestcat</goal>
                 </goals>
               </execution>
-			  <!-- <execution>
-			    <id>process-resources</id>
-				<goals>
-				  <goal>gitcommithash</goal>
-				</goals>
-			  </execution> -->
             </executions>
       	  </plugin>
 		</plugins>
