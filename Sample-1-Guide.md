@@ -14,11 +14,15 @@ Each of these stages will be shown in seperate branches in this repo, all tagged
 The test we are going to use is very simplistic to avoid any additional complications not relevant to setting up a new test in automation. The test case connects a 3270 emulator to a system and checks for a string we expect on OUR systems. If you are following this through using this test case please amend the test to suite your needs. You will also need to ammend the `cps.properties` and `credential.properties` to run this locally. I have included samples within this branch.
 ![Eclipse Screen](./images/eclipse-test-screen.png)
 
+
 At this point we can run a maven install:
+
 ![Eclipse Screen](./images/maven-install.png)
 
 And create the run configuration:
+
 ![Eclipse Screen](./images/run-configuration.png)
+
 This is all the work required to run the test locally (assuming that the correct configurations in the CPS and CREDS have been completed)
 
 The eclipse plugin has the ability to wrapper and run this test in this raw format. Under the covers, the plugin creates a OSGi Bundle Repository(OBR) to allow galasa to run anything housed within the workspace. This can be seen in the first two lines of a test run console output:
