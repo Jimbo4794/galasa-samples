@@ -1,48 +1,28 @@
 # Sample 1 Guide - Converting and running a local tests in automation
 
-The first thing we need to do is to restructure our project. To wrapper all of our related artifacts for this test (which could easily be a set of tests), we are going to create a parent project. We are then going to create a new project to generate the OBR. The stucture should like this:
+For the cabability to run in automation, all of our test engines need access to our test material. We do this by offering the material as maven artifacts, stored in a maven repository. If using the docker operator to bring up an ecosystem, a nexus repository is also instantiated, which can be used to store the artifacts. However, you can use any maven repositories you have access to.
 
-```
-+-- dev.galasa.examples.tests.parent
-|   +-- dev.galasa.examples.tests
-|       +-- src
-|       +-- pom.xml
-|   +-- dev.galasa.examples.obr
-|       +-- pom.xml
-|   +-- pom.xml
-```
+First off we need to define to maven where we want to deploy our artifacts to. For this example I am using a local nexus repository that I brought up on my workstation. We need to create or add to the settings.xml that maven uses.
 
-I find the easiest way to do this is to rename the project that we started with to the parent and then editing the pom:
+I have included a example settings.xml in this repository, that can be used to help define your own. In the example I have configured both a SNAPSHOT and release repo, which you may want to do if you have a development and release stream of your test material. Things that have been define in the file:
+
+1. A server called example. We pass the credentials here for ease, but there is more secure solutions offered by maven.
+1. A profile called example. Here we define a couple of properties that get can be used in a maven deploy setup, allowing repo locations to be changed easily, without the need to change it in 100's of locations. In this profile we also define the SNAPSHOT and release repos.
+
+From our project we can then use this information to deploy our artifacts to a maven repository. It is simple to add a deploy location to a project as we can just add the definition to the parent project, which can then be used by the children. In the parent POM we can add the following:
 
 ![parent POM](./images/parent-pom.png)
 
-Important thigs to take note of intially is the change of packaing to pom. (This basically tells maven to create no output, as this is a container for submodules). Our child projects can utilise all the dependancies and prooperties from this parent.
+The `<id>example</id>` refers to the server we setup, and the `<url>${example.*.repo}</url>` refers to the properties we setup in our profile.
 
-The modules that can be seen can then be easily added to our parent pom, and if using eclipse we can use: 
+The last thing to do to be able to deploy our artifats is to setup our maven run. On the command lines this would looke something like `mvn -P example clean deploy`. If you are using eclipse, then you can setup a run configuration something like this:
 
-![subprojects](./images/maven-module.png)
+![eclipse maven deploy](./images/deploy-config.png)
 
-If we go ahead and create two modules, `dev.galasa.examples.tests` and `dev.galasa.exaples.obr`:
+If we run this job we should see the following output:
 
-![wizard](./images/module-wizard.png)
+![sucess](./images/build-success.png)
 
-We can then move our `SampleTests.java` class to the new `dev.galasa.examples.tests` module. The pom for this module is simple, containing a refernce to the parent project, the artifact information and then a packaging of `<packaging>bundle</packaging>` as before:
+Looking on the local repo (http://127.0.0.1:8081/#browse/browse:maven) we should now be able to see all of our artifacts:
 
-![test pom](./images/tests-pom.png)
-
-For the OBR project we can remove the `src` dir and projects as they will not be required. The packaging type for this project is a custom one we provide called `<packaging>galasa-obr</packaging>`. This pom should reference our project that contains our test code so it can be added to the OBR:
-
-![obr pom](./images/obr-pom.png)
-
-This pom may have errors saying that it is not covered by the lifecycle.
-
-We also need to edit the build phase of our parent POM:
-
-![parent build](./images/parent-build-pom.png)
-
-These changes allow for the galasa style bundles to be generated. One thing to note is the `buildtestcat` goal of the plugin. This goal automatically generates the artifact that forms the test catalog. When we then build our projects, we will see a testcatalog.json that is in the build output. In the example code in this repo I have left the target dir in the OBR project where you can see an example of the OBR produced and the test catalog created.
-
-Peforming a Maven install on this project should build all the artifacts and looking something like this:
-
-![build console](./images/build-console.png)
-![finished](./images/built-parent.png)
+![nexus](./images/nexus.png)
