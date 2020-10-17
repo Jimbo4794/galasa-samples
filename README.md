@@ -1,45 +1,48 @@
 # Sample 1 Guide - Converting and running a local tests in automation
 
-Starting with a basic test like the one shown in this branch, we are going to go through the process:
-
-1. Converting this into a OSGi bundle wrapped project
-1. Deploying the artifacts to a maven repository
-1. Setting up a new test stream
-1. Running the test headlessly from eclipse
-1. Running in a jenkins pipeline
-
-Each of these stages will be shown in seperate branches in this repo, all tagged with `Samples-1-*`
-
-## Starting point
-The test we are going to use is very simplistic to avoid any additional complications not relevant to setting up a new test in automation. The test case connects a 3270 emulator to a system and checks for a string we expect on OUR systems. If you are following this through using this test case please amend the test to suite your needs. You will also need to ammend the `cps.properties` and `credential.properties` to run this locally. I have included samples within this branch.
-![Eclipse Screen](./images/eclipse-test-screen.png)
-
-
-At this point if we want to run this test, we can run a maven install:
-
-![Eclipse Screen](./images/maven-install.png)
-
-And create the run configuration:
-
-![Eclipse Screen](./images/run-configuration.png)
-
-This is all the work required to run the test locally (assuming that the correct configurations in the CPS and CREDS have been completed)
-
-The eclipse plugin has the ability to wrapper and run this test in this raw format. Under the covers, the plugin creates a OSGi Bundle Repository(OBR) to allow galasa to run anything housed within the workspace. This can be seen in the first two lines of a test run console output:
+The first thing we need to do is to restructure our project. To wrapper all of our related artifacts for this test (which could easily be a set of tests), we are going to create a parent project. We are then going to create a new project to generate the OBR. The stucture should like this:
 
 ```
-17/10/2020 11:39:13.076 DEBUG dev.galasa.boot.Launcher.processCommandLine - Supplied command line arguments:
- --bootstrap file:///Users/jamesdavies/.galasa/bootstrap.properties 
- --overrides file:///var/folders/_v/kdn1r7tn1gj3h4881mn92lfr0000gn/T/galasa_eclipse_cache_3439508801795774060/galasaoverrides4839275147795675185.properties 
- --localmaven file:/Users/jamesdavies/.m2/repository/ 
- --remotemaven https://repo.maven.apache.org/maven2/ 
- --obr file:/Users/jamesdavies/Eclipse-Workspaces/2019-Galasa-Eclipse/.metadata/.plugins/dev.galasa.eclipse/workspace.obr 
- --obr mvn:dev.galasa/dev.galasa.uber.obr/0.11.0/obr 
- --test dev.galasa.examples.tests/dev.galasa.dev.galasa.examples.tests.SampleTest 
-
-17/10/2020 11:39:13.087 DEBUG dev.galasa.boot.Launcher.launch - OBR Repository Files: [file:/Users/jamesdavies/Eclipse-Workspaces/2019-Galasa-Eclipse/.metadata/.plugins/dev.galasa.eclipse/workspace.obr, mvn:dev.galasa/dev.galasa.uber.obr/0.11.0/obr]
++-- dev.galasa.examples.tests.parent
+|   +-- dev.galasa.examples.tests
+|       +-- src
+|       +-- pom.xml
+|   +-- dev.galasa.examples.obr
+|       +-- pom.xml
+|   +-- pom.xml
 ```
 
-Here see the `--obr file:/Users/jamesdavies/Eclipse-Workspaces/2019-Galasa-Eclipse/.metadata/.plugins/dev.galasa.eclipse/workspace.obr ` which is created when we start our test locally and which is used by galasa to run our test.
+I find the easiest way to do this is to rename the project that we started with to the parent and then editing the pom:
 
- To run this test in automation we need to complete this work ourselves and push the resulting OBR to a maven repository, alongside all the nessessary jars containing our test material. Housing our test code and OBR's in a centeral location ensure that our test engines have access to all the resoures required to run the test. 
+![parent POM](./images/parent-pom.png)
+
+Important thigs to take note of intially is the change of packaing to pom. (This basically tells maven to create no output, as this is a container for submodules). Our child projects can utilise all the dependancies and prooperties from this parent.
+
+The modules that can be seen can then be easily added to our parent pom, and if using eclipse we can use: 
+
+![subprojects](./images/maven-module.png)
+
+If we go ahead and create two modules, `dev.galasa.examples.tests` and `dev.galasa.exaples.obr`:
+
+![wizard](./images/module-wizard.png)
+
+We can then move our `SampleTests.java` class to the new `dev.galasa.examples.tests` module. The pom for this module is simple, containing a refernce to the parent project, the artifact information and then a packaging of `<packaging>bundle</packaging>` as before:
+
+![test pom](./images/tests-pom.png)
+
+For the OBR project we can remove the `src` dir and projects as they will not be required. The packaging type for this project is a custom one we provide called `<packaging>galasa-obr</packaging>`. This pom should reference our project that contains our test code so it can be added to the OBR:
+
+![obr pom](./images/obr-pom.png)
+
+This pom may have errors saying that it is not covered by the lifecycle.
+
+We also need to edit the build phase of our parent POM:
+
+![parent build](./images/parent-build-pom.png)
+
+These changes allow for the galasa style bundles to be generated. One thing to note is the `buildtestcat` goal of the plugin. This goal automatically generates the artifact that forms the test catalog. When we then build our projects, we will see a testcatalog.json that is in the build output. In the example code in this repo I have left the target dir in the OBR project where you can see an example of the OBR produced and the test catalog created.
+
+Peforming a Maven install on this project should build all the artifacts and looking something like this:
+
+![build console](./images/build-console.png)
+![finished](./images/built-parent.png)

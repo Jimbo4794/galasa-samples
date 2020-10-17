@@ -1,0 +1,30 @@
+{
+  "classes": {
+    "dev.galasa.examples.tests/dev.galasa.examples.tests.SampleTest": {
+      "name": "dev.galasa.examples.tests.SampleTest",
+      "bundle": "dev.galasa.examples.tests",
+      "shortName": "SampleTest",
+      "package": "dev.galasa.examples.tests"
+    }
+  },
+  "packages": {
+    "dev.galasa.examples.tests": [
+      "dev.galasa.examples.tests/dev.galasa.examples.tests.SampleTest"
+    ]
+  },
+  "bundles": {
+    "dev.galasa.examples.tests": {
+      "packages": {
+        "dev.galasa.examples.tests": [
+          "dev.galasa.examples.tests/dev.galasa.examples.tests.SampleTest"
+        ]
+      }
+    }
+  },
+  "sharedEnvironments": {},
+  "gherkin": {},
+  "name": "dev.galasa.examples.obr",
+  "build": "dev.galasa:dev.galasa.examples.obr:0.0.1-SNAPSHOT - 2020-10-17T15:28:52.596Z",
+  "version": "0.0.1-SNAPSHOT",
+  "built": "2020-10-17T15:28:52.596Z"
+}

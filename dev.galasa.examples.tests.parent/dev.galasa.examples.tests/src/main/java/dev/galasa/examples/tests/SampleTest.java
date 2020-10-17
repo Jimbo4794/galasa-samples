@@ -1,4 +1,4 @@
-package dev.galasa.dev.galasa.examples.tests;
+package dev.galasa.examples.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
