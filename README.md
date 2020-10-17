@@ -1,6 +1,8 @@
 # Galasa Samples Repository
 
-This is the main page and contents for the samples in this repository.
+This is the main page and contents for the samples in this repository. To navigate this repository, you can select a sample and stage from the branch list:
+
+![](./images/branch-button.png)
 
 ## Contents
 
