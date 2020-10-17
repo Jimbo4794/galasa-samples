@@ -15,7 +15,7 @@ The test we are going to use is very simplistic to avoid any additional complica
 ![Eclipse Screen](./images/eclipse-test-screen.png)
 
 
-At this point we can run a maven install:
+At this point if we want to run this test, we can run a maven install:
 
 ![Eclipse Screen](./images/maven-install.png)
 
