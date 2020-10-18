@@ -10,15 +10,19 @@ This opens a view where we can see all the available test streams and the packag
 
 I could select one of the four tests here and have them run headlessly in the galasa ecosystem. But how do we now add our new test to this menu?
 
-The first step is to deploy out new test catalog that was generated in the build (testcatalog.json). We can do this with a quick ammendment to our settings.xml that we created last step. We need to add a stream name and the lcoation of our ecosystems bootstrap properties, which we can do with these two new properties:
+The first step is to deploy our new test catalog that was generated in the build (testcatalog.json). We can do this with a quick edit to our settings.xml that we created in the last step. We need to add a stream name and the location of our ecosystems bootstrap properties, which we can do with these two new properties:
 
 ![settings.xml](./images/deploy-testcatalog.png)
 
-Once our `settings.xml` has been updated with `<galasa.test.stream>` and `<galasa.bootstrap>` properties, we can also ammend our deploy job. Again if we  look at the eclipse method, we can simply add a new goal to our run configuration. The goal `dev.galasa:galasa-maven-plugin:deploytestcat` will add the generted test catalog to our api server. We can see our new catalog available at `http://<XXX>:8080/testcatalog` where `<XXX>` is your hostname, so in my example `http://127.0.0.1:8080/testcatalog`:
+Once our `settings.xml` has been updated with `<galasa.test.stream>` and `<galasa.bootstrap>` properties, we can also ammend our deploy job. Again if we  look at the eclipse method, we can simply add a new goal to our run configuration. The goal `dev.galasa:galasa-maven-plugin:deploytestcat` will add the generated test catalog to our api server:
+
+![](./images/run-config.png)
+
+ Running this deploy again, we can see our new catalog available at `http://<XXX>:8080/testcatalog` where `<XXX>` is your hostname, so in my example `http://127.0.0.1:8080/testcatalog`:
 
 ![](./images/catalogs.png)
 
-You can also view individual catalogs but going to `http://<XXX>:8080/testcatalog/<streamName>`, E.G `http://127.0.0.1:8080/testcatalog/example`
+You can also view the contents of the catalogs by going to `http://<XXX>:8080/testcatalog/<streamName>`, E.G `http://127.0.0.1:8080/testcatalog/example`
 
 Now we have a live catalog of tests! Now that all that is required is to add a few properties to our CPS so that galasa knows where to find our catalog and test material. The properties we need are:
 ```
