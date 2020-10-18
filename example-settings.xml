@@ -21,6 +21,8 @@
             <properties>
                 <example.release.repo>http://127.0.0.1:8081/repository/maven</example.release.repo>
                 <example.snapshot.repo>http://127.0.0.1:8081/repository/maven</example.snapshot.repo>
+                <galasa.test.stream>example</galasa.test.stream>
+                <galasa.bootstrap>http://127.0.0.1:8080/bootstrap</galasa.bootstrap>
             </properties>
 			<repositories>
 				<repository>
