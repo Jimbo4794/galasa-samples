@@ -1,0 +1,15 @@
+pipeline {
+   agent any
+   stages {
+      stage('run-tests') {
+         steps {
+            step([$class: 'GalasaTestExecution', 
+                  tests: ['dev.galasa.examples.tests/dev.galasa.examples.tests.SampleTest'],
+                  stream: 'EXAMPLE',
+                  pollTime: '5',
+                  envProps: []
+                  ])
+         }
+      }
+   }
+}
