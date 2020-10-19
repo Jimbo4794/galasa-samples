@@ -16,7 +16,7 @@ I find the easiest way to do this is to rename the project that we started with 
 
 ![parent POM](./images/parent-pom.png)
 
-Important things to take note of intially is the change of `<packaing>` to pom. (This basically tells maven to create no output, as this is a container for submodules). Our child projects can utilise all the dependancies and properties from this parent.
+Important things to take note of initially is the change of `<packaing>` to pom. (This basically tells maven to create no output, as this is a container for submodules). Our child projects can utilise all the dependancies and properties from this parent.
 
 The modules that can be seen can then be easily added to our parent pom, and if using eclipse we can use: 
 
