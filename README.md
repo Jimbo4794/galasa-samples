@@ -1,49 +1,65 @@
-# Sample 2 Guide - Creating a Simple Manager
+# Sample 2 Guide - Setting up and Initialise
 
-This objective of this second sampele is to show how to create a manager which can then be used from your tests. A design choice for this sample is to have this manager in its own project away from test material.
+Inside the `Managers Code` directory in this repo I have created the starts of a managers parent project. This is a place that can be used to store a all or a group of managers and the corresponding OBR required to use them.
 
-## Example Test
+Inside the parent there is a single Manager which will be used to control MyApp, and a OBR building project which will be used to create a OBR for any managers in this parent.
 
-If you look in the Test Code directory in this repo there is a sample test which we will be looking to replace with an application manager. In this tests we perform some setup. We start up our docker container that contains our applicaiton, mounting a known volume which contains a script that we commonly use for setup. We might not want to always use this, but it could be a common procedure that my tests regularly need to do. It requires them to know the docker setup, so where the images are hosted, the image names, and where to mounts the volumes for every test they create. Where this might be part of my test in some cases, a lot of the time this could be just "boilerplate" repeated code.
+## My App Manager
 
-This is why we want to create a manager to extract this application setup, and pass it back to the tester as a single annotation. So aims of this is to create:
+Inside the com.example.myapp.manager package I have started to layout some of the components of the manager:
 
 ```
-@ExampleDockerApplication
-IExampleDockerApplication myApp;
++-- managers_parent             
+|   +-- com.example.managers.obr
+|   +-- com.example.myapp.manager
+|       +-- IMyAppManager.java
+|       +-- MyAppException.java
+|       +-- internal
+|           +-- MyAppManagerField.java
+|           +-- MyAppManagerImpl.java
+|           +-- properties
+|               +-- MyAppPropertiesSingleton.java
+```
+- `IMyAppManager.java` is an interface for our manager
+- `MyAppException.java` it is good practise to have a manager specific expeption to help track any issues. This is especially useful when managers start using other managers.
+- `internal/MyAppMangerImpl.java` is the implementation for the manager. We dont expose any of the code in the interal directory, so the manager will be refered to from other managers by the interface.
+- `internal/MyAppManagerField.java` is a annotation interface that will be used to group all of the annotations owned by this manager.
+- `internal/properties/MyAppPropertiesSingleton.java` is the managers method for interacting with galasa properties from both the CPS and the DSS. This makes it simplier for our manager to call to the framewrok service in a secure way (only a manager can interact with its own properties, and may not interact with others)
+
+## MyAppManagerImpl.java
+
+Currently this class is incomplete, but we have started with the first stage of the manager lifecycle, intialise.
+
+In the class you can see: 
+```
+@Override
+public void initialise(@NotNull IFramework framework, @NotNull List<IManager> allManagers,
+            @NotNull List<IManager> activeManagers, @NotNull GalasaTest galasaTest) throws ManagerException {
+        super.initialise(framework, allManagers, activeManagers, galasaTest);
+
+        if(galasaTest.isJava()) {
+            List<AnnotatedField> ourFields = findAnnotatedFields(MyAppManagerField.class);
+            if (!ourFields.isEmpty()) {
+                youAreRequired(allManagers, activeManagers);
+            }
+        }
+
+        try {
+            this.cps = framework.getConfigurationPropertyService(NAMESPACE);
+            this.dss = framework.getDynamicStatusStoreService(NAMESPACE);
+            MyAppPropertiesSingleton.setCps(cps);
+        } catch (Exception e) {
+            throw new MyAppException("Unable to request framework services", e);
+        }
+    }
 ```
 
-Where this annoation goes away, runs a docker container with our application in, configures it, and passes the tests useful utility methods (aka, getPorts(), getXYZLog(), setApplicationProperties())
+Breaking this down:
+1. Firstly we call the superclasses constructor which sets the test class within the parent object (Abstract Manager). This is important as we will be using several of the superclasses methods later.
+1. We then ensure that the test code that we are looking at is Java. Galasa does have multilanguage support (Gherkin) and we need to do different steps in each case.
+1. Once we have determined that this is Java code, we use the findAnnotatedFields() method from our superclass with the MyAppManagerField annotation class to search the passed test class for any annotations within that belong to this manager. All managers do this.
+1. we then call a method called youAreRequired, (which we will be overriding later) to state that the manager has found an annotation that belongs to it, so the manager need to be initialised.
+1. The last part of this init step is to get access to the CPS and DSS in the namespace that belongs to this manager. This step only needs to be done when you plan to have/retrieve properties as part of your manager.
 
-This brings several other useful things. If i ever changed any implementation surrounding my application and how it is setup; rather than needing to change what could be 100's of tests, I can just change it in the manager, which will ripple out to my tests. It also allows for great control over the test resources in context of your application.
+In the next branch we will be looking how to add a dependancy from this manager to another.
 
-## Manager Lifecyle
-
-It should be noted that test code and manager code have completely different lifecycles within the galasa framework. If we have a quick look at an overview of how the test runs:
-
-1. We start a test by launching the galasa framework inside a OSGi runtime.
-1. This also loads up the test material that we are trying to run.
-1. The test code is then scanned for annoations, as these are used to identify which managers are going to be required for this test.
-1. The appropaite managers are then also loaded into the runtime.
-1. The test runs, using the managers it needs to interact with any resources.
-1. There are then clean up steps to ensure we left any evironment as we found it.
-
-In step 3, we see the managers are loaded, but this is the start of what is called the manager lifecycle:
-
-1. Initalise
-1. Provision Generate
-1. Provision Build
-1. Provision Start
-1. Start of test Class
-1. Start of test method
-1. End of test method
-1. End of test class
-1. Provision Stop
-1. Provision Discard
-1. Perform Failure Analysis
-1. End of test run
-
-Not all steps in the lifecycle are required. And they should be used to suite your needs. The basic example we are going to use today is:
-1. Initalise - intialise the manager, stating any dependancies
-1. Provision Generate - generate the annotations and any requried resources
-1. Provision Discard  - do any clean up of resources controlled by this manager
