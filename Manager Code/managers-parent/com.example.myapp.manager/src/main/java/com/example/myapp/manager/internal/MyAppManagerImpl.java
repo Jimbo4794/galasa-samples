@@ -1,10 +1,14 @@
 package com.example.myapp.manager.internal;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import com.example.myapp.manager.IMyApp;
 import com.example.myapp.manager.IMyAppManager;
+import com.example.myapp.manager.MyApp;
 import com.example.myapp.manager.MyAppException;
 import com.example.myapp.manager.internal.properties.MyAppPropertiesSingleton;
 
@@ -17,10 +21,12 @@ import dev.galasa.docker.IDockerManager;
 import dev.galasa.docker.spi.IDockerManagerSpi;
 import dev.galasa.framework.spi.AbstractManager;
 import dev.galasa.framework.spi.AnnotatedField;
+import dev.galasa.framework.spi.GenerateAnnotatedField;
 import dev.galasa.framework.spi.IConfigurationPropertyStoreService;
 import dev.galasa.framework.spi.IDynamicStatusStoreService;
 import dev.galasa.framework.spi.IFramework;
 import dev.galasa.framework.spi.IManager;
+import dev.galasa.framework.spi.ResourceUnavailableException;
 import dev.galasa.framework.spi.language.GalasaTest;
 
 @Component(service = { IManager.class })
@@ -102,5 +108,35 @@ public class MyAppManagerImpl extends AbstractManager implements IMyAppManager{
      */
     public IDockerManagerSpi getDockerManager() {
         return dockerManager;
+    }
+
+    /**
+     * The method called to generate all the objects behind our annotations
+     */
+    @Override
+    public void provisionGenerate() throws ManagerException, ResourceUnavailableException {
+        List<AnnotatedField> foundAnnotatedFields = findAnnotatedFields(MyAppManagerField.class);
+        for (AnnotatedField annotatedField : foundAnnotatedFields) {
+            Field field = annotatedField.getField();
+            List<Annotation> annotations = annotatedField.getAnnotations();
+
+            if (field.getType() == IMyApp.class) {
+                MyApp annotation = field.getAnnotation(MyApp.class);
+                if (annotation != null) {
+                    IMyApp myApp = generateMyApp(field, annotations);
+                    registerAnnotatedField(field, myApp);
+                }
+            }
+        }
+    }
+
+    /**
+     * This allows for the generation of a object for aspecific annotation to be completed.
+     */
+    @GenerateAnnotatedField(annotation = MyApp.class)
+    public IMyApp generateMyApp(Field field, List<Annotation> annotations) throws MyAppException {
+        MyApp myAppAnnotation = field.getAnnotation(MyApp.class);
+
+        return new MyAppImpl(myAppAnnotation.tag(), myAppAnnotation.version());
     }
 }
