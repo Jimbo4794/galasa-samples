@@ -1,0 +1,11 @@
+{
+  "classes": {},
+  "packages": {},
+  "bundles": {},
+  "sharedEnvironments": {},
+  "gherkin": {},
+  "name": "Galasa Managers OBR",
+  "build": "com.example:com.example.managers.obr:0.1.0-SNAPSHOT - 2021-02-01T15:12:25.804Z",
+  "version": "0.1.0-SNAPSHOT",
+  "built": "2021-02-01T15:12:25.804Z"
+}

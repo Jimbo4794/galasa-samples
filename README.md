@@ -1,65 +1,49 @@
-# Sample 2 Guide - Setting up and Initialise
+# Sample 2 Guide - Dependancies on other managers
 
-Inside the `Managers Code` directory in this repo I have created the starts of a managers parent project. This is a place that can be used to store a all or a group of managers and the corresponding OBR required to use them.
+For MyApp manager, I want to put a dependancy on the docker manager. Its the docker manager I will be using to instantiate my application at test time. 
 
-Inside the parent there is a single Manager which will be used to control MyApp, and a OBR building project which will be used to create a OBR for any managers in this parent.
-
-## My App Manager
-
-Inside the com.example.myapp.manager package I have started to layout some of the components of the manager:
-
-```
-+-- managers_parent             
-|   +-- com.example.managers.obr
-|   +-- com.example.myapp.manager
-|       +-- IMyAppManager.java
-|       +-- MyAppException.java
-|       +-- internal
-|           +-- MyAppManagerField.java
-|           +-- MyAppManagerImpl.java
-|           +-- properties
-|               +-- MyAppPropertiesSingleton.java
-```
-- `IMyAppManager.java` is an interface for our manager
-- `MyAppException.java` it is good practise to have a manager specific expeption to help track any issues. This is especially useful when managers start using other managers.
-- `internal/MyAppMangerImpl.java` is the implementation for the manager. We dont expose any of the code in the interal directory, so the manager will be refered to from other managers by the interface.
-- `internal/MyAppManagerField.java` is a annotation interface that will be used to group all of the annotations owned by this manager.
-- `internal/properties/MyAppPropertiesSingleton.java` is the managers method for interacting with galasa properties from both the CPS and the DSS. This makes it simplier for our manager to call to the framewrok service in a secure way (only a manager can interact with its own properties, and may not interact with others)
-
-## MyAppManagerImpl.java
-
-Currently this class is incomplete, but we have started with the first stage of the manager lifecycle, intialise.
-
-In the class you can see: 
+To do this we override some of the methods provided in the superclass. Starting with `youAreRequired()`:
 ```
 @Override
-public void initialise(@NotNull IFramework framework, @NotNull List<IManager> allManagers,
-            @NotNull List<IManager> activeManagers, @NotNull GalasaTest galasaTest) throws ManagerException {
-        super.initialise(framework, allManagers, activeManagers, galasaTest);
+public void youAreRequired(@NotNull List<IManager> allManagers, @NotNull List<IManager> activeManagers)
+    throws ManagerException { 
 
-        if(galasaTest.isJava()) {
-            List<AnnotatedField> ourFields = findAnnotatedFields(MyAppManagerField.class);
-            if (!ourFields.isEmpty()) {
-                youAreRequired(allManagers, activeManagers);
-            }
-        }
-
-        try {
-            this.cps = framework.getConfigurationPropertyService(NAMESPACE);
-            this.dss = framework.getDynamicStatusStoreService(NAMESPACE);
-            MyAppPropertiesSingleton.setCps(cps);
-        } catch (Exception e) {
-            throw new MyAppException("Unable to request framework services", e);
-        }
+    if (activeManagers.contains(this)) {
+        return;
     }
+    activeManagers.add(this);
+
+    dockerManager = this.addDependentManager(allManagers, activeManagers, IDockerManagerSpi.class);
+    if (dockerManager == null) {
+        throw new MyAppException("The docker manager is not available, unable to initialise MyAppManager");
+    }
+}
 ```
 
-Breaking this down:
-1. Firstly we call the superclasses constructor which sets the test class within the parent object (Abstract Manager). This is important as we will be using several of the superclasses methods later.
-1. We then ensure that the test code that we are looking at is Java. Galasa does have multilanguage support (Gherkin) and we need to do different steps in each case.
-1. Once we have determined that this is Java code, we use the findAnnotatedFields() method from our superclass with the MyAppManagerField annotation class to search the passed test class for any annotations within that belong to this manager. All managers do this.
-1. we then call a method called youAreRequired, (which we will be overriding later) to state that the manager has found an annotation that belongs to it, so the manager need to be initialised.
-1. The last part of this init step is to get access to the CPS and DSS in the namespace that belongs to this manager. This step only needs to be done when you plan to have/retrieve properties as part of your manager.
+This method was previously calling the one in our superclass which just added this manager to the activeManagers list. This informed galasa that the manager is required and should be provisioned in the next step of the lifecycle.
 
-In the next branch we will be looking how to add a dependancy from this manager to another.
+We have now overriden this method to add some further dependancies to this list. We want to have the situation in out test class where a tester can use the annotation that is owned by this manager WITHOUT the need to also use the docker manager annotations to make use of the docker manager. So in this method we add the dockerManager as a dependant manager. If you looked at the code new code in the `MyAppManagerImpl.java` you may also noticed that the object is actually the DockerManagerSpi. This is another important distinction. Where managers can have dependancies on each other, a manager is still in control of exactly what functionality is provided to another manager through the SPI. I wont be creating an SPI for this manager in this example, but there are examples in out other repos.
 
+You may have also noticed that we check to see if our manager is already in the list of managers to be activated. This is again due to dependancies. Another manager else where could have a dependancy on this manager, previously intialising it before we got the the annotations in the test class that would of done so.
+
+The next thing we have to do is add a provisional dependancy on the docker manager:
+```
+@Override
+public boolean areYouProvisionalDependentOn(@NotNull IManager otherManager) {
+    if(otherManager instanceof IDockerManager) {
+        return true;
+    }
+    return super.areYouProvisionalDependentOn(otherManager);
+}
+```
+What this means, is in the next lifecycle step of provision generate, we allow galasa to correctly order in which managers to be provisioned. This ensures the docker manager will be ready to perform any provision activties that we need it too in this manager.
+
+Last method to add right now is a quick getter to the ManagerImpl.
+```
+public IDockerManagerSpi getDockerManager() {
+    return dockerManager;
+}
+```
+The `MyAppManagerImpl.java` object is not really going to be perform much of the manager specific work, more just a communication and setup piece between your code and the galasa framework. This means other classes are likely to want access to any of the other dependancy managers.
+
+In the next branch we will look at creating and provisioning the annotations.

@@ -1,0 +1,128 @@
+<repository name='com.example:com.example.managers.obr:0.1.0-SNAPSHOT' lastmodified='20210201031225.694'>
+  <resource id='com.example.myapp.manager/0.1.0.SNAPSHOT' symbolicname='com.example.myapp.manager' presentationname='com.example.myapp.manager' uri='mvn:com.example/com.example.myapp.manager/0.1.0-SNAPSHOT/jar' version='0.1.0.SNAPSHOT'>
+    <size>8001</size>
+    <capability name='bundle'>
+      <p n='symbolicname' v='com.example.myapp.manager'/>
+      <p n='presentationname' v='com.example.myapp.manager'/>
+      <p n='version' t='version' v='0.1.0.SNAPSHOT'/>
+      <p n='manifestversion' v='2'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='com.example.myapp.manager'/>
+      <p n='version' t='version' v='0.1.0'/>
+      <p n='uses:' v='dev.galasa'/>
+    </capability>
+    <capability name='service'>
+      <p n='osgi.service' v='osgi.service'/>
+      <p n='version' t='version' v='0.0.0'/>
+      <p n='objectClass:List&lt;String&gt;' v='com.example.myapp.manager.internal.properties.MyAppPropertiesSingleton'/>
+    </capability>
+    <capability name='service'>
+      <p n='osgi.service' v='osgi.service'/>
+      <p n='version' t='version' v='0.0.0'/>
+      <p n='objectClass:List&lt;String&gt;' v='dev.galasa.framework.spi.IManager'/>
+    </capability>
+    <require name='package' filter='(&amp;(package=com.example.myapp.manager))' extend='false' multiple='false' optional='false'>Import package com.example.myapp.manager</require>
+    <require name='package' filter='(&amp;(package=dev.galasa)(version&gt;=0.14.0)(!(version&gt;=1.0.0)))' extend='false' multiple='false' optional='false'>Import package dev.galasa;version="[0.14,1)"</require>
+    <require name='package' filter='(&amp;(package=dev.galasa.framework.spi)(version&gt;=0.14.0)(!(version&gt;=1.0.0)))' extend='false' multiple='false' optional='false'>Import package dev.galasa.framework.spi;version="[0.14,1)"</require>
+    <require name='package' filter='(&amp;(package=dev.galasa.framework.spi.language)(version&gt;=0.14.0)(!(version&gt;=1.0.0)))' extend='false' multiple='false' optional='false'>Import package dev.galasa.framework.spi.language;version="[0.14,1)"</require>
+    <require name='package' filter='(&amp;(package=javax.validation.constraints)(version&gt;=2.0.0)(!(version&gt;=3.0.0)))' extend='false' multiple='false' optional='false'>Import package javax.validation.constraints;version="[2.0,3)"</require>
+    <require name='package' filter='(&amp;(package=org.apache.commons.logging)(version&gt;=1.2.0)(!(version&gt;=2.0.0)))' extend='false' multiple='false' optional='false'>Import package org.apache.commons.logging;version="[1.2,2)"</require>
+  </resource>
+  <resource id='org.apache.commons.net/3.3.0' symbolicname='org.apache.commons.net' presentationname='Commons Net' uri='mvn:commons-net/commons-net/3.3/jar' version='3.3.0'>
+    <description>Apache Commons Net library contains a collection of network utilities and protocol implementations.Supported protocols include: Echo, Finger, FTP, NNTP, NTP, POP3(S), SMTP(S), Telnet, Whois</description>
+    <size>280983</size>
+    <documentation>http://commons.apache.org/proper/commons-net/</documentation>
+    <license>http://www.apache.org/licenses/LICENSE-2.0.txt</license>
+    <capability name='bundle'>
+      <p n='symbolicname' v='org.apache.commons.net'/>
+      <p n='presentationname' v='Commons Net'/>
+      <p n='version' t='version' v='3.3.0'/>
+      <p n='manifestversion' v='2'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.finger'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.imap'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.echo'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.ntp'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.discard'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.smtp'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.pop3'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.telnet'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.nntp'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.bsd'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.daytime'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.time'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.io'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.ftp'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.util'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.whois'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.chargen'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.ftp.parser'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <capability name='package'>
+      <p n='package' v='org.apache.commons.net.tftp'/>
+      <p n='version' t='version' v='3.3.0'/>
+    </capability>
+    <require name='package' filter='(&amp;(package=javax.crypto))' extend='false' multiple='false' optional='false'>Import package javax.crypto</require>
+    <require name='package' filter='(&amp;(package=javax.crypto.spec))' extend='false' multiple='false' optional='false'>Import package javax.crypto.spec</require>
+    <require name='package' filter='(&amp;(package=javax.net))' extend='false' multiple='false' optional='false'>Import package javax.net</require>
+    <require name='package' filter='(&amp;(package=javax.net.ssl))' extend='false' multiple='false' optional='false'>Import package javax.net.ssl</require>
+  </resource>
+</repository>

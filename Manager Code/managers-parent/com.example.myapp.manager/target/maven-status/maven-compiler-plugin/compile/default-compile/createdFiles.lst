@@ -1,0 +1,5 @@
+com/example/myapp/manager/internal/MyAppManagerImpl.class
+com/example/myapp/manager/internal/MyAppManagerField.class
+com/example/myapp/manager/MyAppException.class
+com/example/myapp/manager/internal/properties/MyAppPropertiesSingleton.class
+com/example/myapp/manager/IMyAppManager.class
