@@ -9,8 +9,8 @@ If you look in the Test Code directory in this repo there is a sample test which
 This is why we want to create a manager to extract this application setup, and pass it back to the tester as a single annotation. So aims of this is to create:
 
 ```
-@ExampleDockerApplication
-IExampleDockerApplication myApp;
+@MyApp
+public IMyApp myApp;
 ```
 
 Where this annoation goes away, runs a docker container with our application in, configures it, and passes the tests useful utility methods (aka, getPorts(), getXYZLog(), setApplicationProperties())
