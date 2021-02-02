@@ -137,6 +137,6 @@ public class MyAppManagerImpl extends AbstractManager implements IMyAppManager{
     public IMyApp generateMyApp(Field field, List<Annotation> annotations) throws MyAppException {
         MyApp myAppAnnotation = field.getAnnotation(MyApp.class);
 
-        return new MyAppImpl(myAppAnnotation.tag(), myAppAnnotation.version());
+        return new MyAppImpl(this, myAppAnnotation.tag(), myAppAnnotation.version());
     }
 }
