@@ -1,98 +1,310 @@
-# Sample 1 Guide - Converting and running a local tests in automation
+# Writing a Manager
 
-Now we have our test artifacts, OBR and test catalog hosted in a central location, we are almost ready to start running in automation. The last step is to set up a test stream. In the docker operator, we setup an example test stream for running the simbank tests. We can see this if we open the test automation submit view using:
+This document is to cover the creation of a very basic manager and some of the concepts. For this manager I am pretending I have an application which I am trying to encapsulate for simple use for my testers.
 
-![submit](./images/submit.png)
+### My App
 
-This opens a view where we can see all the available test streams and the packages they offer. Again if you are using the docker operator, there is a simbank example:
+For this example I want to create a manager that will help testers interact and provision tests of "My App". This is going to do several things:
+1. Configure my test to locate a LPAR my test is running on
+2. Configure a 3270 Terminal to connect to that LPAR
+3. Perform some basic 3270 interactions to sign me into my application (handle credentials and navigation)
 
-![simbank stream](./images/simbank-stream.png)
+The idea here is to demonstrate that we can do more with a manager that just interact with a technology. We can code in context knowledge into our manager to reduce repeated steps in tests. This also means that if a application ever changes something like the login process, we only have to resolve this in 1 manager, rather than 1000's of tests.
 
-I could select one of the four tests here and have them run headlessly in the galasa ecosystem. But how do we now add our new test to this menu?
+### Setting Up the Basic Project
+To start, we need a maven project to build in:
+ ![](./images/Image1.png)
 
-The first step is to deploy our new test catalog that was generated in the build (testcatalog.json). We can do this with a quick edit to our settings.xml that we created in the last step. We need to add a stream name and the location of our ecosystems bootstrap properties, which we can do with these two new properties:
+There are two empty packages in place:
+- `com.example.application.manager` - This is going to house all of the Classes that a tester will be interacting with. (The annotations themselves, the Object the Annotation provides and the JavaException for this manager)
+- `com.example.application.manager.internal` - This will contain all of the actually implementation code that will perform the work.
 
-![settings.xml](./images/deploy-testcatalog.png)
+I have also setup the pom.xml with a few dependencies that looks like:
 
-Once our `settings.xml` has been updated with `<galasa.test.stream>` and `<galasa.bootstrap>` properties, we can also ammend our deploy job. Again if we  look at the eclipse method, we can simply add a new goal to our run configuration. The goal `dev.galasa:galasa-maven-plugin:deploytestcat` will add the generated test catalog to our api server:
+ ```
+ <project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-![](./images/run-config.png)
+	<groupId>com.example</groupId>
+	<artifactId>com.example.application.manager</artifactId>
+	<version>0.1.0</version>
+	<packaging>bundle</packaging>
+	
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>11</java.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+		<unpackBundle>true</unpackBundle>
+	</properties>
 
- Running this deploy again, we can see our new catalog available at `http://<XXX>:8080/testcatalog` where `<XXX>` is your hostname, so in my example `http://127.0.0.1:8080/testcatalog`:
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>dev.galasa</groupId>
+				<artifactId>galasa-bom</artifactId>
+				<version>0.24.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
-![](./images/catalogs.png)
+	<dependencies>
+		<dependency>
+			<groupId>dev.galasa</groupId>
+			<artifactId>dev.galasa.framework</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.galasa</groupId>
+			<artifactId>dev.galasa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.galasa</groupId>
+			<artifactId>dev.galasa.zos.manager</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.galasa</groupId>
+			<artifactId>dev.galasa.zos3270.manager</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.service.component.annotations</artifactId>
+		</dependency>
+	</dependencies>
 
-You can also view the contents of the catalogs by going to `http://<XXX>:8080/testcatalog/<streamName>`, E.G `http://127.0.0.1:8080/testcatalog/example`
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.felix</groupId>
+										<artifactId>maven-bundle-plugin</artifactId>
+										<versionRange>[5.1.1,)</versionRange>
+										<goals>
+											<goal>bundle</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute>
+											<runOnConfiguration>true</runOnConfiguration>
+											<runOnIncremental>true</runOnIncremental>
+										</execute>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 
-Now we have a live catalog of tests! Now that all that is required is to add a few properties to our CPS so that galasa knows where to find our catalog and test material. The properties we need are:
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>5.1.1</version>
+				<extensions>true</extensions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
 ```
-# A comma seperated list of all the different test streams
-framework.test.streams
+### Creating an annotation
+To create an Galasa annotation we need three things, the Class to define the interface the user will interact with, the class to define the annotation itself, a class to define a grouping annotation. So starting with the interface for the user object (we call this a TPI in Galasa)
 
-# A url of the maven repository used to house the test material
-framework.test.stream.<streamName>.repo
-
-# The specific obr version to be used
-framework.test.stream.<streamName>.obr
-
-# The location of the test catalog on the api server
-framework.test.stream.<streamName>.location
-
-# A basic description for the stream, this will appear in the eclipse plugin
-framework.test.stream.<streamName>.description
+### `IMyAppTerminal.java`
 ```
-There is several ways that we can add these to our CPS. You can use the `etcdctl` CLI tool which you can install on your local machine and then setting the two environment variables:
+package com.example.application.manager;
 
+import dev.galasa.zos3270.ITerminal;
+
+public interface IMyAppTerminal extends ITerminal{
+	void goToMainScreen() throws MyAppException;
+}
 ```
-ETCDCTL_API=3
-ETCDCTL_ENDPOINTS=<XXX>
-```
+This is a very simple class as we are extending the default 3270 Terminal built into Galasa to allow us to add some initial navigation to my terminal, as well as some addition functionality like the `goToMainScreen()`.
 
-Where `<XXX>` is the hostname of the etcd cluster used to host the CPS.
-
-However, to avoid having to install any new software, we can use docker commands to interact with our container that hosts the CPS. Using the command:
+For a tester to be able to use this object and for Galasa to reflect a real implementation into this object, we need to attach it to an annotation.
+### `MyAppTerminal.java`
 
 ```
-docker exec -it galasa_cps /bin/sh
+package com.example.application.manager;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import com.example.application.manager.internal.MyAppField;
+
+import dev.galasa.framework.spi.ValidAnnotatedFields;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.FIELD })
+@MyAppField
+@ValidAnnotatedFields({ IMyAppTerminal.class })
+public @interface MyAppTerminal {
+}
 ```
-This will start a session with the container that is hosting the cps, which already has `etcdctl` installed and configured.
+Which at first glance is an empty class. I could be adding fields to this class, but for this example we dont need to. But for an example look at the Account annotation in the Simbank examples for a reference.
 
-From this point we need to add several properties using the command of `etcdctl put <key> <value>`. This is to fuly define the test stream and the location of all the test artifacts to galasa. This can be made easier with a shell script if being commonly done, but you can also just run these commands (edited to your own needs):
+The annotations in the class are the important bits, so here is a breakdown of what they all do:
+- `@Retention(RetentionPolicy.RUNTIME)` - indicates to the VM that our annotation is used at both compile and runtime.
+- `@Target({ ElementType.FIELD })` - indicates at the context at which our annotation is applicable.
+- `@MyAppField` -  is another annotation we are about to define inside our internal package, we will come back to this.
+- `@ValidAnnotatedFields({ IMyAppTerminal.class })` - Is used to both define and validate what object interface we are expecting the object that will populate our interface once instantiated by out manager.
+
+But it is also possible for a manager to "own" multiple annotations. For this reason we need to be able to group annotations, which we do with another annotation (you will see why later):
+### `MyAppField.java`
+```
+package com.example.application.manager.internal;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE })
+public @interface MyAppField {
+}
+```
+This second annotation is completely empty except our defining annotations.
+
+I have also included a custom Exception we will use:
+### `MyAppException.java`
+```
+package com.example.application.manager;
+
+import dev.galasa.ManagerException;
+
+public class MyAppException extends ManagerException {
+    private static final long serialVersionUID = 1L;
+
+    public MyAppException() {
+    }
+
+    public MyAppException(String message) {
+        super(message);
+    }
+
+    public MyAppException(Throwable cause) {
+        super(cause);
+    }
+
+    public MyAppException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public MyAppException(String message, Throwable cause, boolean enableSuppression,
+            boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+}
 
 ```
-etcdctl put framework.test.streams SIMBANK,EXAMPLE
-etcdctl put framework.test.stream.EXAMPLE.repo http://<XXX>:8081/repository/maven
-etcdctl put framework.test.stream.EXAMPLE.obr mvn:dev.galasa/dev.galasa.examples.obr/0.0.1-SNAPSHOT/obr
-etcdctl put framework.test.stream.EXAMPLE.location http://<XXX>:8080/testcatalog/example
-etcdctl put framework.test.stream.EXAMPLE.description "Example Test Stream"
+At this point our project should look like this:
+![](./images/Image2.png)
+
+With these in place, we have defined out TPI. 
+
+### Fitting into the Test Lifecycle
+We now need to move onto some of the Galasa specific components that will allow our manager to fit into the test lifecycle, as well as actually get picked up at runtime. For this simple manager we are only going to interact with 3 components within the test lifecycle: `Initialise, ProvisionGenerate, and ProvisionDiscard`
+
+But before we do that, we need to setup a class which will get recognized by the framework as a manager, which we will do in a file called `MyAppManagerImpl.java`. As a best practice, this class will be used for all the Galasa components, and call out to other classes to perform the actually functionality of this manager.
+### `MyAppManagerImpl.java`
 ```
+package com.example.application.manager.internal;
 
-Note that `framework.test.streams` is a comma seperated list. If `etcdctl get framework.test.streams `returns a stream already (like SIMBANK in this example), this will need to be added in addtion to our new stream.
+import org.osgi.service.component.annotations.Component;
 
-We now have one more step before we can run our test in the ecosystem, and that is to define all the properties required for the run, as per the CPS and CREDS files in step one of this sample. The folllowing set of properties are all that are required to run the very simple sample test in our example. Again these commands have to be run inside the session inside the CPS container.
+import dev.galasa.framework.spi.IManager;
 
+@Component(service = { IManager.class})
+public class MyAppManagerImpl extends AbstractManager{
+}
 ```
-etcdctl put zos.cluster.DEFAULT.images MYTESTIMAGE
-etcdctl put zos.image.MYTESTIMAGE.ipv4.hostname <XXX>
-etcdctl put zos.image.MYTESTIMAGE.telnet.port <XXX>
-etcdctl put zos.image.MYTESTIMAGE.telnet.tls false
-etcdctl put zos.image.MYTESTIMAGE.credentials <XXX>
-etcdctl put zos.image.MYTESTIMAGE.max.slots 2
-etcdctl put zos.tag.MYTESTIMAGE.clusterid DEFAULT
-etcdctl put secure.credentials.plex2.username <XXX>
-etcdctl put secure.credentials.plex2.password <XXX>
+Before we add any code here, it is important to add both the `extends` to the class and the OSGi service component. The service component is what we used in Galasa to identify what classes are managers (which will have all the methods we are expecting a manager to have). The AbstractManager implements `IManager.class` and provides all the components required to be a manager. We will be overriding methods to customise our manager for purpose however.
+
+The first method to override here is the `initalise()` method, as this is what tells Galasa if this manager is needed for a certain test run. For context, the framework will loop through every manager, and ask if the test we are trying to run has any annotations owned by that manager. If the answer is yes then we initialise the manager (and any dependant managers.)
 ```
+@Component(service = { IManager.class})
+public class MyAppManagerImpl extends AbstractManager{
+	private static final Log logger = LogFactory.getLog(MyAppManagerImpl.class);
 
-Now if we go to the `Submit tests to automation` window in eclipse, we should see a new test stream available to us:
+    private IZosManagerSpi                     zosManager;
+    private IZos3270ManagerSpi                 z3270manager;
+	
+	@Override
+    public void initialise(@NotNull IFramework framework, @NotNull List<IManager> allManagers,
+            @NotNull List<IManager> activeManagers, @NotNull GalasaTest galasaTest) throws ManagerException {
+        super.initialise(framework, allManagers, activeManagers, galasaTest);
 
-![stream](./images/example-stream.png)
+        if(galasaTest.isJava()) {
+            List<AnnotatedField> ourFields = findAnnotatedFields(MyAppField.class);
+            if (!ourFields.isEmpty()) {
+            	logger.info("My App annotation found, initalising");
+                youAreRequired(allManagers, activeManagers, galasaTest);
+            }
+        }
+	}
 
-Inside this stream we should be able to access out new test! Using the next window we can request TRACE output, or pass additional/overriding properties to the test, but for this example we can just click finish. If you have the Galasa Runs view open (the galasa logo on the main bar), you should be able to see: 
+    @Override
+	public void youAreRequired(@NotNull List<IManager> allManagers, @NotNull List<IManager> activeManagers, @NotNull GalasaTest galasaTest)
+            throws ManagerException {
+        if (activeManagers.contains(this)) {
+            return;
+        }
 
-![running](./images/allocated.png)
+        activeManagers.add(this);
+        zosManager = addDependentManager(allManagers, activeManagers, galasaTest, IZosManagerSpi.class);
+        if (zosManager == null) {
+            throw new Zos3270ManagerException("The zOS Manager is not available");
+        }
+        z3270manager = addDependentManager(allManagers, activeManagers, galasaTest, IZos3270ManagerSpi.class);
+        if (z3270manager == null) {
+            throw new Zos3270ManagerException("The zOS 3270 Manager is not available");
+        }
+    }
+}
+```
+We need to override two methods to make this possible. `initialise()` and `youAreRequired()`.
 
-Once finished, in our Galasa Results view we should be able to see the new run (might have to right click refresh):
+The function of these methods respectively:
+1. To search for any annotations owned by this manager (`findAnnotatedFields()` is provided from the abstract class)
+2. Add this manager to a list of managers to activate, and add any dependancies on other managers we are going to use.
 
-![](./images/results.png)
+Another method we need to override is:
+```
+    @Override
+	public boolean areYouProvisionalDependentOn(@NotNull IManager otherManager) {
+        if (otherManager instanceof IZosManager || otherManager instanceof IZos3270Manager) {
+            return true;
+        }
 
-You can double click on this to check it passed, but you have just run a test in automation!
+        return super.areYouProvisionalDependentOn(otherManager);
+    }
+```
+This isn't obvious from the code, but the framework itself will call this method when running a tests to build up a ordered list of managers which it needs to provision in a specific order. Here we want to make sure both the ZosManager and the Zos3270Manager are provisioned before this manager (as we plan to use them)
