@@ -53,6 +53,8 @@ public class MyAppManagerImpl extends AbstractManager implements IMyAppManager{
             if (!ourFields.isEmpty()) {
                 youAreRequired(allManagers, activeManagers);
             }
+        } else {
+            throw new MyAppException("Test type provide not currently supported by this manager");   
         }
 
         /**
